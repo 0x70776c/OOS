@@ -289,11 +289,25 @@ public class PrivateBankAlt implements Bank {
     @Override
     public List<Transaction> getTransactionsSorted(String account, boolean asc) {
         List<Transaction> transactions = getTransactions(account);
+
+        //Berechnet den signierten Wert manuell für die Sortierung
+        java.util.function.ToDoubleFunction<Transaction> getSignedSortValue = t -> {
+            if (t instanceof Transfer tr) {
+                if (tr.getSender().equals(account)) {
+                    return -tr.getAmount();
+                } else if (tr.getRecipient().equals(account)) {
+                    return tr.getAmount();
+                }
+                return 0.0;
+            }
+            return t.calculate();
+        };
         if (asc) {
-            transactions.sort(Comparator.comparingDouble(Transaction::calculate));
+            transactions.sort(Comparator.comparingDouble(getSignedSortValue));
         } else {
-            transactions.sort(Comparator.comparingDouble(Transaction::calculate).reversed());
+            transactions.sort(Comparator.comparingDouble(getSignedSortValue).reversed());
         }
+
         return transactions;
     }
 
@@ -309,9 +323,22 @@ public class PrivateBankAlt implements Bank {
         List<Transaction> transactions = getTransactions(account);
         List<Transaction> gefiltert = new ArrayList<>();
 
-        for (int i = 0; i < transactions.size(); i++) {
-            Transaction t = transactions.get(i);
-            double calculatedAmount = t.calculate();
+        for (Transaction t : transactions) {
+            double calculatedAmount;
+
+            if (t instanceof Transfer tr) {
+                // Logik wie in getAccountBalance v2
+                if (tr.getSender().equals(account)) {
+                    calculatedAmount = -tr.getAmount();
+                } else if (tr.getRecipient().equals(account)) {
+                    calculatedAmount = tr.getAmount();
+                } else {
+                    calculatedAmount = 0.0;
+                }
+            } else {
+                calculatedAmount = t.calculate(); //falls nicht transfer
+            }
+
             if (positive && calculatedAmount >= 0) {
                 gefiltert.add(t);
             } else if (!positive && calculatedAmount < 0) {
