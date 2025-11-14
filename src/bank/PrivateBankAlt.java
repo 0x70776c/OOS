@@ -289,27 +289,14 @@ public class PrivateBankAlt implements Bank {
     @Override
     public List<Transaction> getTransactionsSorted(String account, boolean asc) {
         List<Transaction> transactions = getTransactions(account);
-
-        //Berechnet den signierten Wert manuell für die Sortierung
-        java.util.function.ToDoubleFunction<Transaction> getSignedSortValue = t -> {
-            if (t instanceof Transfer tr) {
-                if (tr.getSender().equals(account)) {
-                    return -tr.getAmount();
-                } else if (tr.getRecipient().equals(account)) {
-                    return tr.getAmount();
-                }
-                return 0.0;
-            }
-            return t.calculate();
-        };
         if (asc) {
-            transactions.sort(Comparator.comparingDouble(getSignedSortValue));
+            transactions.sort(Comparator.comparingDouble(Transaction::calculate)); // Comparator(interface mit methode compare) nutzt calc() für jedes transaction obj
         } else {
-            transactions.sort(Comparator.comparingDouble(getSignedSortValue).reversed());
+            transactions.sort(Comparator.comparingDouble(Transaction::calculate).reversed());
         }
-
         return transactions;
     }
+
 
     /**
      * gibt eine liste von postiven oder negativen transactionen aus.

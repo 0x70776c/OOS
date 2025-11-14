@@ -260,8 +260,8 @@ public class PrivateBank implements Bank {
         double balance = 0.0;
         List<Transaction> transactions = accountsToTransactions.get(account);
 
-        for(int i = 0; i < transactions.size(); i++) {
-            balance += transactions.get(i).calculate();
+        for (Transaction transaction : transactions) {
+            balance += transaction.calculate();
         }
 
         return balance;
@@ -294,7 +294,7 @@ public class PrivateBank implements Bank {
     public List<Transaction> getTransactionsSorted(String account, boolean asc) {
         List<Transaction> transactions = getTransactions(account);
         if (asc) {
-            transactions.sort(Comparator.comparingDouble(Transaction::calculate)); // Comparator nutzt calc() für jedes transaction obj
+            transactions.sort(Comparator.comparingDouble(Transaction::calculate)); // Comparator(interface mit methode compare) nutzt calc() für jedes transaction obj
         } else {
             transactions.sort(Comparator.comparingDouble(Transaction::calculate).reversed());
         }
