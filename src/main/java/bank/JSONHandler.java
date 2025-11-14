@@ -18,60 +18,51 @@ public class JSONHandler implements JsonDeserializer<Transaction>, JsonSerialize
     @Override
     public Transaction deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext context) throws JsonParseException {
 
-        // 1. Hol dir das äußere Objekt
         JsonObject obj = jsonElement.getAsJsonObject();
 
-        // 2. Hol dir den Typ-Namen (z.B. "Payment")
         JsonElement classElement = obj.get("CLASSNAME");
         if (classElement == null) {
             throw new JsonParseException("Fehlendes 'CLASSNAME'-Feld im JSON-Objekt.");
         }
-        String className = classElement.getAsString();
 
-        // 3. Hol dir das innere Objekt (INSTANCE) mit den Daten
+        // --- KORREKTUR 1: .trim() hinzugefügt ---
+        String className = classElement.getAsString().trim(); // Entfernt Leerzeichen
+
         JsonElement instanceElement = obj.get("INSTANCE");
         if (instanceElement == null) {
             throw new JsonParseException("Fehlendes 'INSTANCE'-Feld im JSON-Objekt.");
         }
         JsonObject instance = instanceElement.getAsJsonObject();
 
-        // 4. Lies die Basis-Attribute aus, die *alle* Typen haben
         String date = instance.get("date").getAsString();
         double amount = instance.get("amount").getAsDouble();
         String description = instance.get("description").getAsString();
 
-        // 5. Unterscheide anhand des CLASSNAME, welches Objekt wir bauen müssen
+        // --- KORREKTUR 2: .equals() statt == ---
 
-        if (className == "Payment") {
-            // a) Lies die zusätzlichen Payment-Attribute
+        if (className.equals("Payment")) {
             double inInterest = instance.get("incomingInterest").getAsDouble();
             double outInterest = instance.get("outgoingInterest").getAsDouble();
-
-            // b) Baue und returne das Payment-Objekt
             return new Payment(date, amount, description, inInterest, outInterest);
-        } else if (className == "IncomingTransfer") {
-            // a) Lies die zusätzlichen Transfer-Attribute
+
+        } else if (className.equals("IncomingTransfer")) {
             String sender = instance.get("sender").getAsString();
             String recipient = instance.get("recipient").getAsString();
-
-            // b) Baue das Objekt (genau wie in P3 gelernt)
             Transfer t = new Transfer(date, amount, description, sender, recipient);
             return new IncomingTransfer(t);
-        } else if (className == "OutgoingTransfer") {
-            // a) Lies die zusätzlichen Transfer-Attribute
+
+        } else if (className.equals("OutgoingTransfer")) {
             String sender = instance.get("sender").getAsString();
             String recipient = instance.get("recipient").getAsString();
-
-            // b) Baue das Objekt (genau wie in P3 gelernt)
             Transfer t = new Transfer(date, amount, description, sender, recipient);
             return new OutgoingTransfer(t);
+
         } else {
-            // Wenn wir den Typ nicht kennen (z.B. "BonusPayment"), werfen wir einen Fehler.
+            // Dieser Fehler wird jetzt nur noch geworfen, wenn der Typ WIRKLICH unbekannt ist
+            // (oder "Payment " hieß und du .trim() nicht hinzugefügt hast)
             throw new JsonParseException("Unbekannter CLASSNAME beim Deserialisieren: " + className);
         }
-
     }
-
 
     /**
      * Serialisiert ein Transaction-Objekt (Payment, Transfer etc.)
