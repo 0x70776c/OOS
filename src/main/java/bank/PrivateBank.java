@@ -2,6 +2,8 @@ package bank;
 
 import bank.exceptions.*;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -14,7 +16,6 @@ public class PrivateBank implements Bank {
     private String name;
     private double incomingInterest;
     private double outgoingInterest;
-
     /**
      * Map, die Kontonamen auf Listen von Transaktionen abbildet.
      * Wird direkt initialisiert.
@@ -29,10 +30,16 @@ public class PrivateBank implements Bank {
      * @param incomingInterest Einzahlungszins
      * @param outgoingInterest Auszahlungszins
      */
-    public PrivateBank(String name, double incomingInterest, double outgoingInterest) {
+    public PrivateBank(String name, double incomingInterest, double outgoingInterest) throws IOException {
         this.name = name;
         this.incomingInterest = incomingInterest;
         this.outgoingInterest = outgoingInterest;
+     /*   try{
+            File datei = new File()
+        } catch (IOException IO) {
+            System.out.println(IO);
+        }*/
+
     }
 
     /**
