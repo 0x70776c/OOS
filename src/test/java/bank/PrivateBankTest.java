@@ -2,6 +2,8 @@ package bank;
 
 import bank.exceptions.*;
 import org.junit.jupiter.api.*;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
@@ -25,14 +27,25 @@ public class PrivateBankTest {
     }
 
     @AfterEach
-    public void cleanup() throws IOException {
-        Path dirPath = Paths.get(TEST_DIRECTORY);
-        if (!Files.exists(dirPath)) return;
-        try (var files = Files.list(dirPath)) {
-            files.filter(p -> p.toString().endsWith(".json"))
-                    .forEach(p -> { try { Files.delete(p); } catch (IOException ignored) {} });
+    public void cleanup() {
+        File dir = new File(TEST_DIRECTORY);
+
+        if (!dir.exists()) {
+            return;
+        }
+
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (file.getName().endsWith(".json")) {
+                file.delete();
+            }
         }
     }
+
+
+
 
     @Test
     @DisplayName("createAccount & JSON-Datei")
