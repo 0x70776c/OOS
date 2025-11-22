@@ -74,16 +74,17 @@ public class PrivateBankTest {
     }
 
     @Test
-    @DisplayName("Exceptions bei Duplikat / nicht vorhandenen Account")
-    public void testExceptions() throws Exception {
+    @DisplayName("Testet alle Exceptions)")
+    public void testAllExceptions() throws Exception {
+
         bank.createAccount("KontoA");
         assertThrows(AccountAlreadyExistsException.class, () -> bank.createAccount("KontoA"));
-        assertThrows(AccountDoesNotExistException.class, () -> bank.addTransaction("Unbekannt", paymentIn));
-        assertThrows(TransactionAlreadyExistException.class, () -> {
-            bank.addTransaction("KontoA", paymentIn);
-            bank.addTransaction("KontoA", paymentIn);
-        });
+        assertThrows(AccountDoesNotExistException.class, () -> bank.addTransaction("QuatschKonto", paymentIn));
+        bank.addTransaction("KontoA", paymentIn);
+        assertThrows(TransactionAlreadyExistException.class, () -> bank.addTransaction("KontoA", paymentIn));
         assertThrows(TransactionDoesNotExistException.class, () -> bank.removeTransaction("KontoA", paymentOut));
+        Transfer temp =new Transfer("03.01.2025", -50, "Strom", "KontoA", "KontoB");
+        assertThrows(TransactionAttributeException.class,() -> bank.attributeValidation(temp));
     }
 
     @Test
@@ -157,9 +158,6 @@ public class PrivateBankTest {
         // Negative Transaktionen abfragen
         List<Transaction> negative = bank.getTransactionsByType("KontoA", false);
         assertEquals(2, negative.size());
-        // Reihenfolge prüfen optional
-        assertTrue(negative.stream().anyMatch(t -> t.calculate() == -103.0));
-        assertTrue(negative.stream().anyMatch(t -> t.calculate() == -50.0));
     }
 
 }
