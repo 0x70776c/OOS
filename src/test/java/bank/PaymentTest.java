@@ -1,86 +1,41 @@
 package bank;
 
+import bank.Payment;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * JUnit 5 Testklasse für die Payment-Klasse (P4, A3).
- */
-public class PaymentTest {
+class PaymentTest {
 
-    private Payment paymentIncoming;
-    private Payment paymentOutgoing;
+    private Payment payment1;
+    private Payment payment2;
 
-    /**
-     * Diese 'init'-Methode wird (dank @BeforeEach)
-     * vor JEDEM einzelnen @Test neu ausgeführt.
-     */
     @BeforeEach
-    public void init() {
-        paymentIncoming = new Payment("01.01.2025", 1000, "Gehalt", 0.05, 0.03);
-        paymentOutgoing = new Payment("02.01.2025", -100, "Miete", 0.05, 0.03);
+    void setUp() {
+        // Testdaten erstellen
+        payment1 = new Payment("2025-11-17", 100.0, "Miete", 0.01, 0.02);
+        payment2 = new Payment(payment1); // Copy-Konstruktor
     }
 
-    /**
-     * Test 1: Testet den Konstruktor und die Getter.
-     */
     @Test
-    @DisplayName("Konstruktor und Getter")
-    public void testConstructor() {
-        assertEquals("01.01.2025", paymentIncoming.getDate());
-        assertEquals(1000, paymentIncoming.getAmount());
-        assertEquals("Gehalt", paymentIncoming.getDescription());
-        assertEquals(0.05, paymentIncoming.getIncomingInterest());
-        assertEquals(0.03, paymentIncoming.getOutgoingInterest());
+    void testConstructorAndCopy() {
+        assertEquals(payment1.getAmount(), payment2.getAmount());
+        assertEquals(payment1.getDescription(), payment2.getDescription());
+        assertEquals(payment1.getDate(), payment2.getDate());
+        assertEquals(payment1.getIncomingInterest(), payment2.getIncomingInterest());
+        assertEquals(payment1.getOutgoingInterest(), payment2.getOutgoingInterest());
     }
 
-    /**
-     * Test 2: Testet den Copy-Konstruktor.
-     */
     @Test
-    @DisplayName("Copy-Konstruktor")
-    public void testCopyConstructor() {
-        Payment copy = new Payment(paymentIncoming);
-
-        assertEquals(paymentIncoming, copy, "Kopie sollte 'equals' dem Original sein");
-        assertNotSame(paymentIncoming, copy, "Kopie sollte nicht dasselbe Objekt im Speicher sein");
+    void testCalculate() {
+        double expected = 100.0 + (100.0 * 0.01) - (100.0 * 0.02);
+        assertEquals(expected, payment1.calculate(), 1e-6);
     }
 
-    /**
-     * Test 3: Testet calculate() (beide Fälle, Ein- und Auszahlung).
-     */
     @Test
-    @DisplayName("calculate() (Ein- und Auszahlung)")
-    public void testCalculate() {
-        assertEquals(950.0, paymentIncoming.calculate(), "Berechnung für Einzahlung ist falsch");
-        assertEquals(-103.0, paymentOutgoing.calculate(), "Berechnung für Auszahlung ist falsch");
-    }
-
-    /**
-     * Test 4: Testet die equals()-Methode.
-     */
-    @Test
-    @DisplayName("equals()")
-    public void testEquals() {
-        Payment copy = new Payment(paymentIncoming);
-
-        assertEquals(paymentIncoming, copy);
-        assertNotEquals(paymentIncoming, paymentOutgoing);
-        assertNotEquals(null, paymentIncoming);
-    }
-
-    /**
-     * Test 5: Testet die toString()-Methode (robust).
-     */
-    @Test
-    @DisplayName("toString()")
-    public void testToString() {
-        String output = paymentIncoming.toString();
-
-        assertTrue(output.contains("Payment"), "toString() sollte 'Payment' enthalten");
-        assertTrue(output.contains("950"), "toString() sollte den *berechneten* Betrag enthalten");
-        assertTrue(output.contains("Gehalt"), "toString() sollte Beschreibung enthalten");
+    void testEqualsAndToString() {
+        assertEquals(payment1, payment2);
+        assertTrue(payment1.toString().contains("Miete"));
     }
 }

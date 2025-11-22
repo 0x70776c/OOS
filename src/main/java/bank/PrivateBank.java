@@ -19,6 +19,13 @@ import java.util.stream.Stream;
  */
 public class PrivateBank implements Bank {
 
+    /**
+     * Gson instance for class PrivateBank (shared across all instances)
+     */
+    public static final Gson gson = new GsonBuilder()
+            .registerTypeHierarchyAdapter(Transaction.class, new JSONHandler())
+            .setPrettyPrinting()
+            .create();
 
     /**
      * Map, die Kontonamen auf Listen von Transaktionen abbildet.
@@ -28,7 +35,6 @@ public class PrivateBank implements Bank {
     private String name;
     private double incomingInterest;
     private double outgoingInterest;
-    private transient Gson gson;
     private String directoryName;
     /**
      * Standard-Konstruktor.
@@ -140,77 +146,69 @@ public class PrivateBank implements Bank {
 
 
     /**
-     * Liest alle .json-Dateien aus dem directoryName,
-     * deserialisiert sie und lädt sie in die accountsToTransactions-Map.
-     *
-     * @throws IOException Wenn ein E/A-Fehler beim Lesen der Dateien auftritt.
+     * Liest alle vorhandenen Konten aus dem Verzeichnis ein.
      */
     private void readAccounts() throws IOException {
-        Path dirPath = Paths.get(this.directoryName);
+        File dir = new File(directoryName);
 
-        if (!Files.exists(dirPath)) {
-            try {
-                Files.createDirectories(dirPath);
-            } catch (IOException e) {
-                System.err.println("Fehler beim Erstellen des Verzeichnisses: " + dirPath);
-                throw e;
-            }
-            return;
+        // Falls Ordner nicht existiert, erstellen
+        if (!dir.exists()) {
+            dir.mkdirs();
         }
 
-        Gson deserialize = new GsonBuilder().registerTypeAdapter(Transaction.class, new JSONHandler()).setPrettyPrinting().create();
+        File[] files = dir.listFiles();
+        if (files == null) return;
 
-        Type typeList = new TypeToken<List<Transaction>>() {}.getType();
+        for (File file : files) {
+            // WICHTIG: Nur .json Dateien lesen, sonst Absturz bei .DS_Store etc.
+            if (!file.getName().endsWith(".json")) continue;
 
-        try (Stream<Path> files = Files.list(dirPath)) {
-            files.filter(p -> p.toString().endsWith(".json")).forEach(filePath -> {
+            // ".json" am Ende abschneiden für den Kontonamen
+            String account = file.getName().substring(0, file.getName().length() - 5);
 
-                // Dateiname (z.B. "Konto Adam.json")
-                String fileName = filePath.getFileName().toString();
-                // Kontoname (z.B. "Konto Adam")
-                String accountName = fileName.substring(0, fileName.lastIndexOf('.'));
+            try {
+                // Java 11: Datei als String lesen (sehr kurz!)
+                String json = Files.readString(file.toPath());
 
-                // Versuche, die Datei zu lesen und zu deserialisieren
-                try (Reader reader = new FileReader(filePath.toFile())) {
+                // Typ definieren und parsen
+                Type type = new TypeToken<List<Transaction>>() {}.getType();
+                List<Transaction> transactions = gson.fromJson(json, type);
 
-                    List<Transaction> transactions = deserialize.fromJson(reader, typeList);
-
-                    if (transactions != null) {
-                        this.accountsToTransactions.put(accountName, new ArrayList<>(transactions));
-                    }
-
-                } catch (Exception e) {
-
-                    System.err.println("Fehler beim Lesen der Kontodatei " + fileName + ": " + e.getMessage());
+                if (transactions != null) {
+                    accountsToTransactions.put(account, transactions);
                 }
-            });
+            } catch (Exception e) {
+                System.out.println("Fehler beim Lesen von " + file.getName());
+                // Wir werfen hier nicht weiter, damit ein kaputtes File nicht alles stoppt
+            }
         }
     }
 
     /**
-     * Schreibt den *aktuellen* Stand eines Kontos aus der Map
-     * in die entsprechende .json-Datei.
-     *
-     * @param account Der Name des Kontos, das gespeichert werden soll.
-     * @throws IOException Wenn ein E/A-Fehler beim Schreiben der Datei auftritt.
+     * Speichert ein spezifisches Konto als JSON-Datei.
      */
     private void writeAccount(String account) throws IOException {
-        List<Transaction> transactions = this.accountsToTransactions.get(account);
-        if (transactions == null) {
-            throw new IOException("Konto '" + account + "' nicht in der Map gefunden, kann nicht schreiben.");
-        }
+        if (!accountsToTransactions.containsKey(account)) return;
 
-        Gson serialize = new GsonBuilder().registerTypeAdapter(Transaction.class, new JSONHandler()).setPrettyPrinting().create();
+        // Pfad bauen
+        Path path = Paths.get(directoryName, account + ".json");
 
-        Type typeList = new TypeToken<List<Transaction>>() {}.getType();
+        // Ordner sicherstellen
+        if (!Files.exists(path.getParent())) Files.createDirectories(path.getParent());
 
-        Path filePath = Paths.get(this.directoryName, account + ".json");
+        // Liste holen und in JSON umwandeln
+        List<Transaction> transactions = accountsToTransactions.get(account);
 
-        try (Writer writer = new FileWriter(filePath.toFile())) {
+        // WICHTIG: Immer Gson nutzen. Leere Liste wird zu "[]".
+        // Ein leerer String "" wäre ungültiges JSON und würde readAccounts crashen.
+        String json = gson.toJson(transactions);
 
-            serialize.toJson(transactions, typeList, writer);
-        }
+        // Schreiben
+        Files.writeString(path, json);
     }
+
+
+
 
 
     /**
