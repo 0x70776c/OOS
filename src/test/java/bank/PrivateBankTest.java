@@ -9,7 +9,6 @@ import java.nio.file.*;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("PrivateBank Tests kompakt")
 public class PrivateBankTest {
 
     private static final String TEST_DIRECTORY = "/Users/pawel/Desktop/UNI/3semesteer/oos/p2/JSON";
@@ -45,10 +44,7 @@ public class PrivateBankTest {
     }
 
 
-
-
     @Test
-    @DisplayName("createAccount & JSON-Datei")
     public void testCreateAccount() throws IOException, AccountAlreadyExistsException {
         bank.createAccount("KontoA");
         assertTrue(bank.getAccountsToTransactions().containsKey("KontoA"));
@@ -56,7 +52,6 @@ public class PrivateBankTest {
     }
 
     @Test
-    @DisplayName("addTransaction / removeTransaction")
     public void testAddRemoveTransaction() throws Exception {
         bank.createAccount("KontoA");
         bank.addTransaction("KontoA", paymentIn);
@@ -67,14 +62,12 @@ public class PrivateBankTest {
 
 
     @Test
-    @DisplayName("Copy konst")
     public void testCOPY() throws Exception {
         PrivateBank bankCpy= new PrivateBank(bank);
         assertEquals(bank, bankCpy);
     }
 
     @Test
-    @DisplayName("Testet alle Exceptions)")
     public void testAllExceptions() throws Exception {
 
         bank.createAccount("KontoA");
@@ -88,7 +81,6 @@ public class PrivateBankTest {
     }
 
     @Test
-    @DisplayName("P3-Logik: getAccountBalance & Transfer-Typ")
     public void testBalanceAndTransfer() throws Exception {
         bank.createAccount("KontoA");
         bank.addTransaction("KontoA", paymentIn);
@@ -100,7 +92,6 @@ public class PrivateBankTest {
     }
 
     @Test
-    @DisplayName("P4-Persistenz: readAccounts")
     public void testPersistence() throws Exception {
         bank.createAccount("KontoPersist");
         bank.addTransaction("KontoPersist", paymentIn);

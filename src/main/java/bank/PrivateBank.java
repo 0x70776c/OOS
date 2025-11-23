@@ -50,7 +50,6 @@ public class PrivateBank implements Bank {
         this.directoryName = directoryName;
 
         this.readAccounts();
-
     }
 
 
@@ -160,17 +159,13 @@ public class PrivateBank implements Bank {
         if (files == null) return;
 
         for (File file : files) {
-            // WICHTIG: Nur .json Dateien lesen, sonst Absturz bei .DS_Store etc.
             if (!file.getName().endsWith(".json")) continue;
 
-            // ".json" am Ende abschneiden für den Kontonamen
             String account = file.getName().substring(0, file.getName().length() - 5);
 
             try {
-                // Java 11: Datei als String lesen (sehr kurz!)
                 String json = Files.readString(file.toPath());
 
-                // Typ definieren und parsen
                 Type type = new TypeToken<List<Transaction>>() {}.getType();
                 List<Transaction> transactions = gson.fromJson(json, type);
 
@@ -179,7 +174,6 @@ public class PrivateBank implements Bank {
                 }
             } catch (Exception e) {
                 System.out.println("Fehler beim Lesen von " + file.getName());
-                // Wir werfen hier nicht weiter, damit ein kaputtes File nicht alles stoppt
             }
         }
     }

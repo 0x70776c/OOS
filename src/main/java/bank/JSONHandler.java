@@ -72,9 +72,8 @@ public class JSONHandler implements JsonDeserializer<Transaction>, JsonSerialize
     public JsonElement serialize(Transaction transaction, Type type, JsonSerializationContext context) {
 
         JsonObject jsonOuterObject = new JsonObject();
-        JsonObject jsonInnerObject = new JsonObject(); // Das wird "INSTANCE"
+        JsonObject jsonInnerObject = new JsonObject();
 
-        // Basis-Attribute füllen
         jsonInnerObject.addProperty("date", transaction.getDate());
         jsonInnerObject.addProperty("amount", transaction.getAmount());
         jsonInnerObject.addProperty("description", transaction.getDescription());
