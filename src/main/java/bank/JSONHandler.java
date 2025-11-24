@@ -25,8 +25,7 @@ public class JSONHandler implements JsonDeserializer<Transaction>, JsonSerialize
             throw new JsonParseException("Fehlendes 'CLASSNAME'-Feld im JSON-Objekt.");
         }
 
-        // --- KORREKTUR 1: .trim() hinzugefügt ---
-        String className = classElement.getAsString().trim(); // Entfernt Leerzeichen
+        String className = classElement.getAsString().trim();
 
         JsonElement instanceElement = obj.get("INSTANCE");
         if (instanceElement == null) {
@@ -38,7 +37,6 @@ public class JSONHandler implements JsonDeserializer<Transaction>, JsonSerialize
         double amount = instance.get("amount").getAsDouble();
         String description = instance.get("description").getAsString();
 
-        // --- KORREKTUR 2: .equals() statt == ---
 
         if (className.equals("Payment")) {
             double inInterest = instance.get("incomingInterest").getAsDouble();
@@ -58,8 +56,6 @@ public class JSONHandler implements JsonDeserializer<Transaction>, JsonSerialize
             return new OutgoingTransfer(t);
 
         } else {
-            // Dieser Fehler wird jetzt nur noch geworfen, wenn der Typ WIRKLICH unbekannt ist
-            // (oder "Payment " hieß und du .trim() nicht hinzugefügt hast)
             throw new JsonParseException("Unbekannter CLASSNAME beim Deserialisieren: " + className);
         }
     }
@@ -78,7 +74,6 @@ public class JSONHandler implements JsonDeserializer<Transaction>, JsonSerialize
         jsonInnerObject.addProperty("amount", transaction.getAmount());
         jsonInnerObject.addProperty("description", transaction.getDescription());
 
-        // Spezifische Attribute füllen
         if (transaction instanceof Payment payment) {
             jsonOuterObject.addProperty("CLASSNAME", "Payment");
             jsonInnerObject.addProperty("incomingInterest", payment.getIncomingInterest());

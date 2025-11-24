@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * Repräsentiert eine private Bank, die Konten und Transaktionen verwaltet.
@@ -149,13 +148,8 @@ public class PrivateBank implements Bank {
      */
     private void readAccounts() throws IOException {
         File dir = new File(directoryName);
-
-        // Falls Ordner nicht existiert, erstellen
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
         File[] files = dir.listFiles();
+
         if (files == null) return;
 
         for (File file : files) {
@@ -184,20 +178,12 @@ public class PrivateBank implements Bank {
     private void writeAccount(String account) throws IOException {
         if (!accountsToTransactions.containsKey(account)) return;
 
-        // Pfad bauen
         Path path = Paths.get(directoryName, account + ".json");
 
-        // Ordner sicherstellen
         if (!Files.exists(path.getParent())) Files.createDirectories(path.getParent());
 
-        // Liste holen und in JSON umwandeln
         List<Transaction> transactions = accountsToTransactions.get(account);
-
-        // WICHTIG: Immer Gson nutzen. Leere Liste wird zu "[]".
-        // Ein leerer String "" wäre ungültiges JSON und würde readAccounts crashen.
         String json = gson.toJson(transactions);
-
-        // Schreiben
         Files.writeString(path, json);
     }
 
@@ -255,8 +241,6 @@ public class PrivateBank implements Bank {
      * @throws TransactionAttributeException wenn Attribute ungültig sind
      */
     public void attributeValidation(Transaction transaction) throws TransactionAttributeException {
-
-
         if (transaction instanceof Payment p) {
             if (p.getIncomingInterest() < 0 || p.getIncomingInterest() > 1 ||
                     p.getOutgoingInterest() < 0 || p.getOutgoingInterest() > 1) {
