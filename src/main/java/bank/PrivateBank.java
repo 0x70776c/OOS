@@ -407,4 +407,24 @@ public class PrivateBank implements Bank {
         return gefiltert;
     }
 
+
+    @Override
+    public List<String> getAllAccounts(){
+        return new ArrayList<>(accountsToTransactions.keySet());//gibt alle keys
+    }
+
+    @Override
+    public void deleteAccount(String acc) throws AccountDoesNotExistException,IOException{
+        if (!accountsToTransactions.containsKey(acc)) {
+            throw new AccountDoesNotExistException("Account '" + acc + "' existiert nicht.");
+        }
+
+        accountsToTransactions.remove(acc);
+
+        Path path = Paths.get(directoryName, acc + ".json");
+        if (Files.exists(path)) {
+            Files.delete(path);
+        }
+    }
+
 }
