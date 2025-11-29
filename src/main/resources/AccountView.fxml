@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="499.0" prefWidth="695.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.AccountController">
+    <children>
+        <ListView fx:id="transactionListView" layoutX="79.0" layoutY="77.0" prefHeight="345.0" prefWidth="539.0">
+            <contextMenu>
+                <ContextMenu>
+                    <items>
+                        <MenuItem mnemonicParsing="false" onAction="#deleteTransactionEvent" text="Löschen" />
+                        <MenuItem mnemonicParsing="false" onAction="#getAscendingTransactions" text="Aufsteigende Sortierung" />
+                        <MenuItem mnemonicParsing="false" onAction="#getDescendingTransactions" text="Absteigende Sortierung" />
+                        <MenuItem mnemonicParsing="false" onAction="#getPositiveTransactions" text="Positive Transaktionen" />
+                        <MenuItem mnemonicParsing="false" onAction="#getNegativeTransactions" text="Negative Transaktionen" />
+                    </items>
+                </ContextMenu>
+            </contextMenu>
+        </ListView>
+        <Button layoutX="277.0" layoutY="445.0" mnemonicParsing="false" onAction="#setMainView" text="Back" />
+        <Button layoutX="348.0" layoutY="445.0" mnemonicParsing="false" onAction="#addTransaction" text="Add Transaction" />
+        <Text fx:id="balanceText" layoutX="249.0" layoutY="39.0" strokeType="OUTSIDE" strokeWidth="0.0" textAlignment="CENTER" wrappingWidth="200.0" />
+    </children>
+</AnchorPane>
