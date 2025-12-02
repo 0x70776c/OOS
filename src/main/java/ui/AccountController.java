@@ -27,15 +27,12 @@ import java.util.Optional;
  */
 public class AccountController {
 
-    // --- FXML Verknüpfungen (Passend zu deiner FXML) ---
-
     @FXML
     private ListView<Transaction> transactionListView;
 
     @FXML
-    private Text balanceText; // Deine FXML nutzt Text statt Label
+    private Text balanceText;
 
-    // --- Daten ---
     private PrivateBank bank;
     private String selectedAccount;
 
@@ -54,10 +51,8 @@ public class AccountController {
      */
     private void updateView() {
         try {
-            // 1. Liste aktualisieren (Standard: Alle Transaktionen)
             updateList(bank.getTransactions(selectedAccount));
 
-            // 2. Kontostand aktualisieren
             double balance = bank.getAccountBalance(selectedAccount);
             balanceText.setText(String.format("Balance: %.2f €", balance));
 

@@ -14,28 +14,22 @@ public class FxApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // 1. FXML-Loader vorbereiten (Pfad zur Datei in resources)
-        // Achte auf den Slash am Anfang!
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainView.fxml"));
         Parent root = loader.load();
 
-        // 2. Backend initialisieren (PrivateBank)
         PrivateBank bank = null;
         try {
-            // HIER DEINEN PFAD ANPASSEN!
-           // bank = new PrivateBank("Meine Bank", 0.05, 0.03, "/Users/pawel/Desktop/UNI/3semesteer/oos/p2/JSON");
-            bank = new PrivateBank("Meine Bank", 0.05, 0.03, "C:\\Users\\legue\\IdeaProjects\\oos\\src\\main\\java\\json");
+            bank = new PrivateBank("Bank 1", 0.05, 0.03, "/Users/pawel/Desktop/UNI/3semesteer/oos/p2/JSON");
+          //  bank = new PrivateBank("Bank 1", 0.05, 0.03, "C:\\Users\\legue\\IdeaProjects\\oos\\src\\main\\java\\json"); für windows
         } catch (IOException e) {
             showError("Startfehler", "Konnte Bankdaten nicht laden: " + e.getMessage());
-            return; // Abbruch, wenn die Bank nicht geladen werden kann
+            return;
         }
 
-        // 3. Controller holen und Bank übergeben (Dependency Injection)
         MainController controller = loader.getController();
-        controller.setBank(bank);
+        controller.setBank(bank);//bank-> controller uebergabe
 
-        // 4. Fenster anzeigen
-        Scene scene = new Scene(root, 400, 500);
+        Scene scene = new Scene(root, 590, 410);
         primaryStage.setTitle("Private Bank Manager");
         primaryStage.setScene(scene);
         primaryStage.show();
