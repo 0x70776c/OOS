@@ -66,7 +66,6 @@ public class AccountController {
         transactionListView.setItems(items);
     }
 
-    // --- FXML Event Handler (Namen exakt wie in deiner FXML) ---
 
     @FXML
     public void setMainView(ActionEvent event) {
