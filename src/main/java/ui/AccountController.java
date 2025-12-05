@@ -5,8 +5,6 @@ import bank.Transaction;
 import bank.Payment;
 import bank.Transfer;
 import bank.exceptions.*;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -22,9 +20,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controller für die AccountView (Detailansicht).
- */
 public class AccountController {
 
     @FXML
@@ -35,10 +30,13 @@ public class AccountController {
 
     private PrivateBank bank;
     private String selectedAccount;
-
     /**
-     * WICHTIG: Datenübergabe vom MainController.
-     * Ersetzt "initialize" und Konstruktoren.
+     * Setzt das Bankmodell und den aktuell ausgewählten Account.
+     * Muss gemacht werden bevor man irgendwas mit Transaktionen macht,
+     * sonst funktioniert updateView() nicht richtig.
+     *
+     * @param bank das Bankobjekt, wo alle Konten und Transaktionen drin sind
+     * @param account der Name des aktuell ausgewählten Accounts
      */
     public void setBankAndAccount(PrivateBank bank, String account) {
         this.bank = bank;
@@ -47,127 +45,135 @@ public class AccountController {
     }
 
     /**
-     * Aktualisiert Liste und Kontostand.
+     * Aktualisiert die View: TransactionList und Balance werden frisch aus der Bank geholt.
+     * Alte Daten werden komplett gelöscht und neue reingeladen.
+     * Achtung: Wenn Account nicht existiert, gibt's einen Fehlerdialog.
      */
     private void updateView() {
         try {
-            updateList(bank.getTransactions(selectedAccount));
-
+            List<Transaction> daten = bank.getTransactions(selectedAccount);
+            transactionListView.getItems().clear();
+            transactionListView.getItems().addAll(daten);
             double balance = bank.getAccountBalance(selectedAccount);
-            balanceText.setText(String.format("Balance: %.2f €", balance));
-
+            balanceText.setText("Kontostand: " + balance + " €");
         } catch (AccountDoesNotExistException e) {
             showError("Fehler", "Konto existiert nicht mehr.");
         }
     }
 
-    private void updateList(List<Transaction> list) {
-        ObservableList<Transaction> items = FXCollections.observableArrayList(list);
-        transactionListView.setItems(items);
-    }
-
-
+    /**
+     * Wechselt zurück zur MainView.
+     * Lädt die MainView FXML und setzt die Bank im MainController.
+     * @param event das ActionEvent von dem Button-Klick
+     */
     @FXML
     public void setMainView(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainView.fxml"));
             Parent root = loader.load();
-
-            // Bank zurückgeben an den MainController (damit der Zustand erhalten bleibt)
             MainController controller = loader.getController();
             controller.setBank(bank);
-
-            // Szene wechseln
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
         } catch (IOException e) {
-            showError("Fehler", "Konnte nicht zurück wechseln: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
+    /**
+     * Löscht die selektierte Transaktion.
+     * Zeigt vorher ein Bestätigungsdialog, falls nix selektiert ist passiert nichts.
+     */
     @FXML
     public void deleteTransactionEvent() {
         Transaction selected = transactionListView.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            showError("Hinweis", "Keine Transaktion ausgewählt.");
-            return;
-        }
+        if (selected == null) return;
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Wirklich löschen?", ButtonType.YES, ButtonType.NO);
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.YES) {
-                try {
-                    bank.removeTransaction(selectedAccount, selected);
-                    updateView(); // Liste & Saldo neu laden
-                } catch (Exception e) {
-                    showError("Fehler", e.getMessage());
-                }
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Löschen?", ButtonType.YES, ButtonType.NO);
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.YES) {
+            try {
+                bank.removeTransaction(selectedAccount, selected);
+                updateView();
+            } catch (Exception e) {
+                showError("Fehler", e.getMessage());
             }
-        });
+        }
     }
 
-    // --- Sortierung & Filterung ---
-
+    /**
+     * Holt alle Transaktionen in aufsteigender Reihenfolge und zeigt sie in der ListView.
+     */
     @FXML
     public void getAscendingTransactions() {
-        try {
-            updateList(bank.getTransactionsSorted(selectedAccount, true));
-        } catch (Exception e) { showError("Fehler", e.getMessage()); }
+        List<Transaction> sorted = bank.getTransactionsSorted(selectedAccount, true);
+        transactionListView.getItems().clear();
+        transactionListView.getItems().addAll(sorted);
     }
 
+    /**
+     * Holt alle Transaktionen in absteigender Reihenfolge und zeigt sie in der ListView.
+     */
     @FXML
     public void getDescendingTransactions() {
-        try {
-            updateList(bank.getTransactionsSorted(selectedAccount, false));
-        } catch (Exception e) { showError("Fehler", e.getMessage()); }
+        List<Transaction> sorted = bank.getTransactionsSorted(selectedAccount, false);
+        transactionListView.getItems().clear();
+        transactionListView.getItems().addAll(sorted);
     }
 
+    /**
+     * Zeigt nur positive Transaktionen an.
+     * Catch block fängt alle Exceptions vom Model.
+     */
     @FXML
     public void getPositiveTransactions() {
         try {
-            updateList(bank.getTransactionsByType(selectedAccount, true));
+            List<Transaction> filtered = bank.getTransactionsByType(selectedAccount, true);
+            transactionListView.getItems().clear();
+            transactionListView.getItems().addAll(filtered);
         } catch (Exception e) { showError("Fehler", e.getMessage()); }
     }
 
+    /**
+     * Zeigt nur negative Transaktionen an.
+     * Ganz ähnlich wie getPositiveTransactions.
+     */
     @FXML
     public void getNegativeTransactions() {
         try {
-            updateList(bank.getTransactionsByType(selectedAccount, false));
+            List<Transaction> filtered = bank.getTransactionsByType(selectedAccount, false);
+            transactionListView.getItems().clear();
+            transactionListView.getItems().addAll(filtered);
         } catch (Exception e) { showError("Fehler", e.getMessage()); }
     }
 
-    // --- Hinzufügen (Dialoge) ---
-
+    /**
+     * Fügt eine neue Transaktion hinzu.
+     * Zeigt erst ein ChoiceDialog, damit der User Payment oder Transfer wählen kann.
+     */
     @FXML
     public void addTransaction() {
-        // 1. Typ auswählen
-        ChoiceDialog<String> typeDialog = new ChoiceDialog<>("Payment", "Payment", "Transfer");
-        typeDialog.setTitle("Typ wählen");
-        typeDialog.setHeaderText("Neue Transaktion");
-        typeDialog.setContentText("Typ:");
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Payment", "Payment", "Transfer");
+        dialog.setHeaderText("Typ wählen");
+        Optional<String> result = dialog.showAndWait();
 
-        Optional<String> result = typeDialog.showAndWait();
         if (result.isPresent()) {
-            if (result.get().equals("Payment")) {
-                showAddPaymentDialog();
-            } else {
-                showAddTransferDialog();
-            }
+            if (result.get().equals("Payment")) createPayment();
+            else createTransfer();
         }
     }
 
-    private void showAddPaymentDialog() {
+    /**
+     * Öffnet ein Dialog zum Erstellen eines Payments.
+     * Alle Eingaben werden als TextField gemacht, Betrag muss in Double umgewandelt werden.
+     */
+    private void createPayment() {
         Dialog<Payment> dialog = new Dialog<>();
-        dialog.setTitle("Neues Payment");
-        dialog.setHeaderText("Daten eingeben");
-
-        ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(okButton, ButtonType.CANCEL);
+        dialog.setHeaderText("Payment anlegen");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10);
-
         TextField desc = new TextField(); desc.setPromptText("Beschreibung");
         TextField date = new TextField(); date.setPromptText("Datum");
         TextField amount = new TextField(); amount.setPromptText("Betrag");
@@ -175,11 +181,10 @@ public class AccountController {
         grid.addRow(0, new Label("Beschreibung:"), desc);
         grid.addRow(1, new Label("Datum:"), date);
         grid.addRow(2, new Label("Betrag:"), amount);
-
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(btn -> {
-            if (btn == okButton) {
+            if (btn == ButtonType.OK) {
                 try {
                     double val = Double.parseDouble(amount.getText());
                     return new Payment(date.getText(), val, desc.getText(), 0, 0);
@@ -188,30 +193,32 @@ public class AccountController {
             return null;
         });
 
-        dialog.showAndWait().ifPresent(p -> {
+        Optional<Payment> result = dialog.showAndWait();
+        if (result.isPresent()) {
             try {
-                bank.addTransaction(selectedAccount, p);
+                bank.addTransaction(selectedAccount, result.get());
                 updateView();
             } catch (Exception e) { showError("Fehler", e.getMessage()); }
-        });
+        }
     }
 
-    private void showAddTransferDialog() {
+    /**
+     * Öffnet ein Dialog zum Erstellen eines Transfers.
+     * Sender ist automatisch der aktuelle Account, Empfänger muss der User eingeben.
+     */
+    private void createTransfer() {
         Dialog<Transfer> dialog = new Dialog<>();
-        dialog.setTitle("Neuer Transfer");
-        dialog.setHeaderText("Daten eingeben");
-
-        ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(okButton, ButtonType.CANCEL);
+        dialog.setHeaderText("Transfer anlegen");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10);
 
-        TextField desc = new TextField();
-        TextField date = new TextField();
-        TextField amount = new TextField();
+        TextField desc = new TextField(); desc.setPromptText("Beschreibung");
+        TextField date = new TextField(); date.setPromptText("Datum");
+        TextField amount = new TextField(); amount.setPromptText("Betrag");
         TextField sender = new TextField(); sender.setText(selectedAccount);
-        TextField recipient = new TextField();
+        TextField recipient = new TextField(); recipient.setPromptText("Empfänger");
 
         grid.addRow(0, new Label("Beschreibung:"), desc);
         grid.addRow(1, new Label("Datum:"), date);
@@ -222,7 +229,7 @@ public class AccountController {
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(btn -> {
-            if (btn == okButton) {
+            if (btn == ButtonType.OK) {
                 try {
                     double val = Double.parseDouble(amount.getText());
                     return new Transfer(date.getText(), val, desc.getText(), sender.getText(), recipient.getText());
@@ -231,19 +238,26 @@ public class AccountController {
             return null;
         });
 
-        dialog.showAndWait().ifPresent(t -> {
+        Optional<Transfer> result = dialog.showAndWait();
+        if (result.isPresent()) {
             try {
-                bank.addTransaction(selectedAccount, t);
+                bank.addTransaction(selectedAccount, result.get());
                 updateView();
             } catch (Exception e) { showError("Fehler", e.getMessage()); }
-        });
+        }
     }
 
+    /**
+     * Zeigt ein Fehler-Alert an.
+     * Ganz simpel, nix kompliziert.
+     * @param title Titel des Dialogs
+     * @param msg Nachricht, die angezeigt werden soll
+     */
     private void showError(String title, String msg) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Fehler");
         alert.setHeaderText(title);
         alert.setContentText(msg);
         alert.show();
     }
+
 }
