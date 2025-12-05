@@ -92,7 +92,7 @@ Das Projekt folgt einer sauberen **MVC-Architektur (Model-View-Controller)** mit
 1. **Repository klonen:**
 
 ```bash
-[git clone https://github.com/0x70776c/OOS.git
+git clone https://github.com/0x70776c/OOS.git
 ```
 2. **Konfiguration anpassen:**
 Öffnen Sie src/main/java/ui/FxApplication.java und passen Sie den Speicherpfad im Konstruktor der PrivateBank an Ihr lokales System an:
